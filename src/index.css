@@ -1,0 +1,295 @@
+@import 'tailwindcss';
+
+/* Radikal Font Family */
+@font-face {
+  font-family: 'Radikal';
+  src: url('./assets/fonts/Radikal UltraThin.otf') format('opentype');
+  font-weight: 100;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Radikal';
+  src: url('./assets/fonts/Radikal UltraThin Italic.otf') format('opentype');
+  font-weight: 100;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Radikal';
+  src: url('./assets/fonts/Radikal Thin.otf') format('opentype');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Radikal';
+  src: url('./assets/fonts/Radikal Thin Italic.otf') format('opentype');
+  font-weight: 200;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Radikal';
+  src: url('./assets/fonts/Radikal Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Radikal';
+  src: url('./assets/fonts/Radikal Light Italic.otf') format('opentype');
+  font-weight: 300;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Radikal';
+  src: url('./assets/fonts/Radikal Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Radikal';
+  src: url('./assets/fonts/Radikal Italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Radikal';
+  src: url('./assets/fonts/Radikal Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Radikal';
+  src: url('./assets/fonts/Radikal Medium Italic.otf') format('opentype');
+  font-weight: 500;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Radikal';
+  src: url('./assets/fonts/Radikal Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Radikal';
+  src: url('./assets/fonts/Radikal Bold Italic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Radikal';
+  src: url('./assets/fonts/Radikal Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Radikal';
+  src: url('./assets/fonts/Radikal Black Italic.otf') format('opentype');
+  font-weight: 900;
+  font-style: italic;
+}
+
+@theme {
+  --color-premier-bg: #37003c;
+  --color-premier-card: #4a0638;
+  --color-premier-accent: #c71585;
+  --color-premier-text: #ffffff;
+  --color-premier-muted: #d8bfd8;
+  --color-premier-border: #7c0e54;
+  --color-premier-success: #c71585;
+  
+  --color-series-tercera: #ef4444;
+  --color-series-segunda: #8b5cf6;
+  --color-series-senior: #a78bfa;
+  --color-series-primera: #c71585;
+  
+  --font-family-sans: 'Radikal', system-ui, sans-serif;
+}
+
+* {
+  border-color: var(--color-premier-border);
+}
+
+body {
+  background: 
+    linear-gradient(rgba(55, 0, 60, 0.85), rgba(55, 0, 60, 0.85)),
+    url('./assets/fondo.jpg');
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: var(--color-premier-text);
+  font-family: var(--font-family-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Card styles */
+.card {
+  background: rgba(74, 6, 56, 0.7);
+  backdrop-filter: blur(20px);
+  border-radius: 1rem;
+  border: 1px solid rgba(199, 21, 133, 0.2);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px -10px rgba(199, 21, 133, 0.4), 0 10px 20px -5px rgba(0, 0, 0, 0.5);
+  border-color: rgba(199, 21, 133, 0.5);
+}
+
+/* Button styles */
+.btn-primary {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--color-premier-accent);
+  color: white;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: rgb(167 21 133 / 0.9);
+}
+
+.btn-primary:active {
+  transform: scale(0.95);
+}
+
+.btn-ghost {
+  padding: 0.5rem 1rem;
+  color: var(--color-premier-muted);
+  transition: color 0.2s;
+}
+
+.btn-ghost:hover {
+  color: var(--color-premier-text);
+}
+
+/* Text utilities */
+.text-gradient {
+  background: linear-gradient(to right, #c71585, #fbbf24);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-green-primary {
+  color: #c71585;
+}
+
+.bg-green-primary {
+  background-color: #c71585;
+}
+
+.bg-green-dark {
+  background: linear-gradient(135deg, #37003c 0%, #4a0638 50%, #7c0e54 100%);
+}
+
+.border-green-primary {
+  border-color: #c71585;
+}
+
+/* Scrollbar custom */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(199, 21, 133, 0.3) rgba(74, 6, 56, 0.4);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 0.5rem;
+  height: 0.5rem;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(74, 6, 56, 0.4);
+  border-radius: 0.5rem;
+  margin: 0.25rem;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgba(199, 21, 133, 0.4) 0%, rgba(199, 21, 133, 0.6) 100%);
+  border-radius: 0.5rem;
+  border: 2px solid rgba(74, 6, 56, 0.4);
+  transition: all 0.3s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, rgba(199, 21, 133, 0.6) 0%, rgba(199, 21, 133, 0.8) 100%);
+  border-color: rgba(199, 21, 133, 0.2);
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+  background: rgba(74, 6, 56, 0.4);
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(74, 6, 56, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(199, 21, 133, 0.2);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive container */
+.container-custom {
+  width: 100%;
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-custom {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-custom {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 10px #c71585,
+                0 0 20px #c71585,
+                0 0 30px #c71585;
+  }
+  to {
+    box-shadow: 0 0 20px #c71585,
+                0 0 30px #c71585,
+                0 0 40px #c71585;
+  }
+}
