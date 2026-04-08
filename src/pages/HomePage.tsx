@@ -8,7 +8,7 @@ import { GET_GOLEADORES_POR_SERIE } from '../graphql/queries/scorers';
 import { getClubLogo } from '../utils/clubImages';
 import { Club, TablaPosicion, Jornada, GoleadorPorSerie } from '../types';
 import { FaTrophy, FaCalendar, FaFutbol } from 'react-icons/fa';
-import AvisosActivos from '../components/AvisosActivos';
+import NoticiasCarousel from '../components/NoticiasCarousel';
 import LoadingScreen from '../components/LoadingScreen';
 import LazyImage from '../components/LazyImage';
 
@@ -44,8 +44,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
-      {/* Avisos activos */}
-      <AvisosActivos />
       
       {/* Tabla de Posiciones */}
       <section className="container-custom py-8">
@@ -241,6 +239,9 @@ export default function HomePage() {
           </div>
         </motion.div>
       </section>
+
+      {/* Noticias y Avisos */}
+      <NoticiasCarousel />
 
       {/* Sección Goleadores por Serie */}
       <section className="container-custom py-8">

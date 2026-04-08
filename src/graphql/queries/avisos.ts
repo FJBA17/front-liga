@@ -6,6 +6,7 @@ export const GET_AVISOS_ACTIVOS = gql`
       id
       titulo
       mensaje
+      tipo
       createdAt
     }
   }
