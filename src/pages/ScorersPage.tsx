@@ -6,6 +6,8 @@ import { GET_GOLEADORES_POR_SERIE } from '../graphql/queries/scorers';
 import { getClubLogo } from '../utils/clubImages';
 import { seriesColors, seriesNames } from '../utils/seriesColors';
 import { GoleadorPorSerie, TipoSerie } from '../types';
+import LoadingScreen from '../components/LoadingScreen';
+import LazyImage from '../components/LazyImage';
 
 export default function ScorersPage() {
   const [serieActiva, setSerieActiva] = useState<TipoSerie>(TipoSerie.TERCERA);
@@ -13,6 +15,8 @@ export default function ScorersPage() {
   const { data, loading } = useQuery<{ goleadoresPorSerie: GoleadorPorSerie[] }>(
     GET_GOLEADORES_POR_SERIE
   );
+
+  if (loading) return <LoadingScreen />;
 
   const goleadores = data?.goleadoresPorSerie || [];
   const goleadoresFiltrados = goleadores
@@ -129,7 +133,7 @@ export default function ScorersPage() {
                       {/* Escudo - Hidden en móvil pequeño */}
                       <div className="hidden sm:block flex-shrink-0">
                         <div className="relative">
-                          <img
+                          <LazyImage
                             src={getClubLogo(scorer.jugador.club.nombre)}
                             alt={scorer.jugador.club.nombreCorto}
                             className="w-10 h-10 md:w-12 md:h-12 object-contain"
@@ -147,7 +151,7 @@ export default function ScorersPage() {
                         </h3>
                         <div className="flex items-center gap-2 text-xs md:text-sm flex-wrap">
                           <div className="flex items-center gap-1.5 sm:hidden">
-                            <img
+                            <LazyImage
                               src={getClubLogo(scorer.jugador.club.nombre)}
                               alt={scorer.jugador.club.nombreCorto}
                               className="w-4 h-4 object-contain"

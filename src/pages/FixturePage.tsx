@@ -2,14 +2,19 @@ import { useQuery } from '@apollo/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaCalendar, FaClock, FaMapMarkerAlt, FaChevronRight } from 'react-icons/fa';
 import { GET_JORNADAS, GET_PARTIDOS_BY_JORNADA, GET_RESULTADOS_BY_PARTIDO } from '../graphql/queries/matches';
+import { GET_CLUBES } from '../graphql/queries/clubs';
 import { getClubLogo } from '../utils/clubImages';
 import { Jornada, Partido, ResultadoSerie } from '../types';
 import { useState } from 'react';
+import LoadingScreen from '../components/LoadingScreen';
+import LazyImage from '../components/LazyImage';
 
 export default function FixturePage() {
   const [selectedJornada, setSelectedJornada] = useState<string | null>(null);
   
   const { data: jornadasData, loading: jornadasLoading, error: jornadasError } = useQuery<{ jornadas: Jornada[] }>(GET_JORNADAS);
+  const { data: clubesData } = useQuery<{ clubes: Array<{ id: string; estadio?: string; ubicacionEstadio?: string }> }>(GET_CLUBES);
+  const clubes = clubesData?.clubes ?? [];
   
   const { data: partidosData, loading: partidosLoading } = useQuery<{
     partidosPorJornada: Partido[];
@@ -23,6 +28,8 @@ export default function FixturePage() {
   
   const jornadaSeleccionada = jornadas.find(j => j.id === selectedJornada);
   
+  if (jornadasLoading) return <LoadingScreen />;
+
   if (jornadasError) {
     return (
       <div className="container-custom py-12">
@@ -36,16 +43,15 @@ export default function FixturePage() {
   return (
     <div className="min-h-screen pb-12">
       {/* Hero Header */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-premier-card via-premier-bg to-black py-16 mb-8">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnptMCAxMmMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIGZpbGw9IiMyMmM1NWUiIGZpbGwtb3BhY2l0eT0iLjAzIi8+PC9nPjwvc3ZnPg==')] opacity-30"></div>
-        <div className="container-custom relative z-10">
+      <div className="py-12 mb-8">
+        <div className="container-custom">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center"
           >
             <h1 className="text-5xl md:text-6xl font-black text-white mb-4">
-              Fixture <span className="text-white">2026</span>
+              Fixture <span className="text-premier-accent">2026</span>
             </h1>
             <p className="text-xl text-premier-muted">
               Calendario completo de la temporada
@@ -68,7 +74,7 @@ export default function FixturePage() {
                 onClick={() => setSelectedJornada(jornada.id)}
                 className={`flex-shrink-0 relative overflow-hidden rounded-xl p-4 min-w-[180px] transition-all duration-300 ${
                   selectedJornada === jornada.id
-                    ? 'bg-gradient-to-br from-premier-accent to-purple-700 text-white shadow-xl shadow-premier-accent/50'
+                    ? 'bg-gradient-to-br from-premier-accent to-purple-700 text-white shadow-md shadow-premier-accent/20'
                     : 'bg-premier-card/60 text-premier-muted hover:bg-premier-card border border-premier-border/20'
                 }`}
               >
@@ -87,7 +93,7 @@ export default function FixturePage() {
                   </div>
                   <div className="text-xs opacity-75 flex items-center gap-1">
                     <FaCalendar className="text-xs" />
-                    {new Date(jornada.fecha).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
+                    {new Date(jornada.fecha.slice(0, 10) + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
                   </div>
                   <div className="text-xs opacity-75 flex items-center gap-1 mt-1">
                     <FaClock className="text-xs" />
@@ -145,7 +151,7 @@ export default function FixturePage() {
               className="space-y-6"
             >
               {partidos.map((partido, idx) => (
-                <PartidoCard key={partido.id} partido={partido} index={idx} />
+                <PartidoCard key={partido.id} partido={partido} index={idx} clubes={clubes} />
               ))}
             </motion.div>
           )}
@@ -159,15 +165,17 @@ export default function FixturePage() {
 interface PartidoCardProps {
   partido: Partido;
   index: number;
+  clubes: Array<{ id: string; estadio?: string; ubicacionEstadio?: string }>;
 }
 
-function PartidoCard({ partido, index }: PartidoCardProps) {
+function PartidoCard({ partido, index, clubes }: PartidoCardProps) {
   // Obtener resultados del partido si está finalizado
   const { data: resultadosData } = useQuery<{ resultadosPorPartido: ResultadoSerie[] }>(
     GET_RESULTADOS_BY_PARTIDO,
     {
       variables: { partidoId: partido.id },
       skip: partido.estado !== 'FINALIZADO',
+      fetchPolicy: 'network-only',
     }
   );
 
@@ -180,19 +188,25 @@ function PartidoCard({ partido, index }: PartidoCardProps) {
       const golesRival = esLocal ? resultado.golesVisitante : resultado.golesLocal;
       const puntosVictoria = resultado.tipoSerie === 'PRIMERA' ? 4 : 3;
       const puntosEmpate = resultado.tipoSerie === 'PRIMERA' ? 2 : 1;
+
+      // ganadorAdminId tiene prioridad
+      if (resultado.ganadorAdminId) {
+        const clubId = esLocal ? partido.clubLocal?.id : partido.clubVisitante?.id;
+        if (resultado.ganadorAdminId === clubId) {
+          puntos += puntosVictoria;
+        }
+        return;
+      }
       
       if (golesClub > golesRival) {
-        // Gané la serie
         if (!resultado.puntosInvertidos) {
           puntos += puntosVictoria;
         }
       } else if (golesClub < golesRival) {
-        // Perdí la serie
         if (resultado.puntosInvertidos) {
           puntos += puntosVictoria;
         }
       } else {
-        // Empate
         if (!resultado.puntosInvertidos) {
           puntos += puntosEmpate;
         }
@@ -235,7 +249,7 @@ function PartidoCard({ partido, index }: PartidoCardProps) {
           >
             <div className="relative mb-2 md:mb-4">
               <div className={`absolute inset-0 blur-2xl ${ganadorLocal ? 'bg-premier-accent/40' : 'bg-white/10'}`}></div>
-              <img
+              <LazyImage
                 src={getClubLogo(partido.clubLocal?.nombre || '')}
                 alt={partido.clubLocal?.nombreCorto}
                 className="w-16 h-16 md:w-28 md:h-28 object-contain relative z-10"
@@ -257,15 +271,12 @@ function PartidoCard({ partido, index }: PartidoCardProps) {
           </motion.div>
 
           {/* VS */}
-          <div className="flex flex-col items-center">
-            <div className="relative">
-              <div className="absolute inset-0 bg-premier-accent/20 blur-xl"></div>
-              <div className="relative z-10 w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-premier-accent to-purple-700 flex items-center justify-center shadow-lg">
-                <span className="text-white text-xl md:text-2xl font-black">VS</span>
-              </div>
-            </div>
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="h-6 md:h-10 w-px bg-premier-border/40"></div>
+            <span className="text-[11px] md:text-xs font-bold text-premier-muted/60 uppercase tracking-widest">vs</span>
+            <div className="h-6 md:h-10 w-px bg-premier-border/40"></div>
             {partido.estado !== 'FINALIZADO' && (
-              <span className="mt-2 text-xs text-premier-muted uppercase tracking-wider">{partido.estado}</span>
+              <span className="mt-1 text-[10px] text-premier-muted uppercase tracking-wider">{partido.estado}</span>
             )}
           </div>
 
@@ -276,7 +287,7 @@ function PartidoCard({ partido, index }: PartidoCardProps) {
           >
             <div className="relative mb-2 md:mb-4">
               <div className={`absolute inset-0 blur-2xl ${ganadorVisitante ? 'bg-premier-accent/40' : 'bg-white/10'}`}></div>
-              <img
+              <LazyImage
                 src={getClubLogo(partido.clubVisitante?.nombre || '')}
                 alt={partido.clubVisitante?.nombreCorto}
                 className="w-16 h-16 md:w-28 md:h-28 object-contain relative z-10"
@@ -304,8 +315,17 @@ function PartidoCard({ partido, index }: PartidoCardProps) {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
               {resultados.map((resultado, idx) => {
                 const serie = seriesData[resultado.tipoSerie as keyof typeof seriesData];
-                const ganadorLocal = resultado.golesLocal > resultado.golesVisitante;
-                const ganadorVisitante = resultado.golesVisitante > resultado.golesLocal;
+                const ganadorLocalField = resultado.golesLocal > resultado.golesVisitante;
+                const ganadorVisitanteField = resultado.golesVisitante > resultado.golesLocal;
+                const empate = resultado.golesLocal === resultado.golesVisitante;
+                // Who actually gets the points (ganadorAdminId > puntosInvertidos > marcador)
+                const puntosVanALocal = resultado.ganadorAdminId
+                  ? resultado.ganadorAdminId === partido.clubLocal?.id
+                  : resultado.puntosInvertidos ? ganadorVisitanteField : ganadorLocalField;
+                const puntosVanAVisitante = resultado.ganadorAdminId
+                  ? resultado.ganadorAdminId === partido.clubVisitante?.id
+                  : resultado.puntosInvertidos ? ganadorLocalField : ganadorVisitanteField;
+                const ajustado = resultado.puntosInvertidos || !!resultado.ganadorAdminId || !!resultado.mensajeAjuste;
                 
                 return (
                   <motion.div
@@ -313,34 +333,46 @@ function PartidoCard({ partido, index }: PartidoCardProps) {
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: idx * 0.1 }}
-                    className="relative overflow-hidden rounded-xl p-2 md:p-4 bg-premier-bg/40 backdrop-blur-sm border border-premier-border/10 hover:border-premier-accent/30 transition-all"
+                    className={`relative overflow-hidden rounded-xl p-2 md:p-4 backdrop-blur-sm border transition-all ${
+                      ajustado
+                        ? 'bg-orange-900/20 border-orange-500/40'
+                        : 'bg-premier-bg/40 border-premier-border/10 hover:border-premier-accent/30'
+                    }`}
                   >
-                    <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${serie.color}`}></div>
+                    <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${ajustado ? 'from-orange-500 to-orange-700' : serie.color}`}></div>
                     <div className="text-center">
                       <span className="text-xs font-bold text-white/60 uppercase tracking-wider">
                         {serie.icon}
                       </span>
+                      {(resultado.puntosInvertidos || resultado.ganadorAdminId) && (
+                        <div className="text-[9px] text-orange-300 font-bold uppercase tracking-wide leading-none mt-0.5">
+                          {resultado.ganadorAdminId ? 'Sec.' : 'Pts inv.'}
+                        </div>
+                      )}
                       <div className="flex items-center justify-center gap-2 md:gap-3 mt-1 md:mt-2">
                         <span className={`text-xl md:text-3xl font-black transition-all ${
-                          ganadorLocal 
-                            ? 'text-premier-accent scale-110' 
-                            : ganadorVisitante
-                            ? 'text-premier-muted/50'
-                            : 'text-white'
+                          puntosVanALocal
+                            ? resultado.puntosInvertidos ? 'text-orange-300 scale-110' : 'text-premier-accent scale-110'
+                            : empate ? 'text-white'
+                            : 'text-premier-muted/50'
                         }`}>
                           {resultado.golesLocal}
                         </span>
                         <span className="text-premier-muted/30 font-bold">:</span>
                         <span className={`text-xl md:text-3xl font-black transition-all ${
-                          ganadorVisitante 
-                            ? 'text-premier-accent scale-110' 
-                            : ganadorLocal
-                            ? 'text-premier-muted/50'
-                            : 'text-white'
+                          puntosVanAVisitante
+                            ? resultado.puntosInvertidos ? 'text-orange-300 scale-110' : 'text-premier-accent scale-110'
+                            : empate ? 'text-white'
+                            : 'text-premier-muted/50'
                         }`}>
                           {resultado.golesVisitante}
                         </span>
                       </div>
+                      {resultado.mensajeAjuste && (
+                        <p className="text-[9px] text-orange-200/80 mt-1.5 leading-tight line-clamp-2 px-1">
+                          {resultado.mensajeAjuste}
+                        </p>
+                      )}
                     </div>
                   </motion.div>
                 );
@@ -350,10 +382,26 @@ function PartidoCard({ partido, index }: PartidoCardProps) {
         )}
 
         {/* Footer - Estadio */}
-        <div className="mt-6 pt-4 border-t border-premier-border/10 flex items-center justify-center gap-2 text-premier-muted">
-          <FaMapMarkerAlt className="text-premier-accent" />
-          <span className="text-sm">{partido.estadio}</span>
-        </div>
+        {partido.estadio && (
+          <div className="mt-6 pt-4 border-t border-premier-border/10 flex items-center justify-center gap-2 text-premier-muted">
+            <FaMapMarkerAlt className="text-premier-accent" />
+            <span className="text-sm">{partido.estadio}</span>
+            {(() => {
+              const clubDueno = clubes.find(c => c.estadio && partido.estadio && c.estadio.toLowerCase() === partido.estadio.toLowerCase());
+              const mapaUrl = clubDueno?.ubicacionEstadio;
+              return mapaUrl ? (
+              <a
+                href={mapaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-premier-accent/20 text-premier-accent hover:bg-premier-accent/30 transition-colors"
+              >
+                <FaMapMarkerAlt className="text-xs" /> Mapa
+              </a>
+              ) : null;
+            })()}
+          </div>
+        )}
       </div>
     </motion.div>
   );

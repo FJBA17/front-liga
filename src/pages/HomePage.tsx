@@ -9,12 +9,16 @@ import { getClubLogo } from '../utils/clubImages';
 import { Club, TablaPosicion, Jornada, GoleadorPorSerie } from '../types';
 import { FaTrophy, FaCalendar, FaFutbol } from 'react-icons/fa';
 import AvisosActivos from '../components/AvisosActivos';
+import LoadingScreen from '../components/LoadingScreen';
+import LazyImage from '../components/LazyImage';
 
 export default function HomePage() {
-  const { data: clubesData } = useQuery<{ clubes: Club[] }>(GET_CLUBES);
-  const { data: tablaData } = useQuery<{ tablaPosiciones: TablaPosicion[] }>(GET_TABLA_POSICIONES);
+  const { data: clubesData, loading: loadingClubes } = useQuery<{ clubes: Club[] }>(GET_CLUBES);
+  const { data: tablaData, loading: loadingTabla } = useQuery<{ tablaPosiciones: TablaPosicion[] }>(GET_TABLA_POSICIONES);
   const { data: jornadasData } = useQuery<{ jornadas: Jornada[] }>(GET_JORNADAS);
   const { data: goleadoresData } = useQuery<{ goleadoresPorSerie: GoleadorPorSerie[] }>(GET_GOLEADORES_POR_SERIE);
+
+  if (loadingClubes || loadingTabla) return <LoadingScreen />;
 
   const clubes = clubesData?.clubes || [];
   const tabla = (tablaData?.tablaPosiciones || []).slice(0, 9);
@@ -97,7 +101,7 @@ export default function HomePage() {
                     
                     {/* Logo */}
                     <div className="flex justify-center">
-                      <img
+                      <LazyImage
                         src={getClubLogo(item.club.nombre)}
                         alt={item.club.nombreCorto}
                         className="w-9 h-9 object-contain"
@@ -174,11 +178,10 @@ export default function HomePage() {
                       
                       {/* Logo */}
                       <div className="flex justify-center items-center">
-                        <img
+                        <LazyImage
                           src={getClubLogo(item.club.nombre)}
                           alt={item.club.nombreCorto}
                           className="w-9 h-9 object-contain"
-                          title={item.club.nombreCorto}
                         />
                       </div>
                     </div>

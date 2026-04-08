@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { GET_CLUBES } from '../graphql/queries/clubs';
 import { getClubLogo } from '../utils/clubImages';
 import { Club } from '../types';
+import LoadingScreen from '../components/LoadingScreen';
+import LazyImage from '../components/LazyImage';
 
 // Colores temáticos por club basados en sus escudos
 const clubColors: Record<string, { primary: string; secondary: string; accent: string }> = {
@@ -31,17 +33,7 @@ const getClubColors = (clubName: string) => {
 export default function ClubsPage() {
   const { data, loading } = useQuery<{ clubes: Club[] }>(GET_CLUBES);
   
-  if (loading) {
-    return (
-      <div className="container-custom py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(9)].map((_, i) => (
-            <div key={i} className="rounded-2xl h-64 animate-pulse bg-premier-card/40"></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <LoadingScreen />;
   
   const clubes = data?.clubes || [];
   
@@ -81,7 +73,7 @@ export default function ClubsPage() {
                 >
                   {/* Escudo grande difuminado de fondo */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-10 group-hover:opacity-20 transition-opacity">
-                    <img
+                    <LazyImage
                       src={getClubLogo(club.nombre)}
                       alt=""
                       className="w-64 h-64 object-contain blur-sm scale-150"
@@ -90,8 +82,8 @@ export default function ClubsPage() {
                   
                   {/* Escudo pequeño en esquina superior izquierda */}
                   <div className="absolute top-3 left-3 z-10">
-                    <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/5 backdrop-blur-md p-2 border-2 border-white/20">
-                      <img
+                    <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-black/40 backdrop-blur-md p-2">
+                      <LazyImage
                         src={getClubLogo(club.nombre)}
                         alt={club.nombre}
                         className="w-full h-full object-contain"

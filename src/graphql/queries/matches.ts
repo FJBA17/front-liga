@@ -21,11 +21,13 @@ export const GET_PARTIDOS_BY_JORNADA = gql`
         id
         nombre
         nombreCorto
+        ubicacionEstadio
       }
       clubVisitante {
         id
         nombre
         nombreCorto
+        ubicacionEstadio
       }
       estadio
       estado
@@ -73,6 +75,7 @@ export const GET_RESULTADOS_BY_PARTIDO = gql`
       golesLocal
       golesVisitante
       puntosInvertidos
+      ganadorAdminId
       mensajeAjuste
     }
   }

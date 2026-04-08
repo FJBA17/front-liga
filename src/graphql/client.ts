@@ -20,13 +20,19 @@ export const apolloClient = new ApolloClient({
               return incoming;
             },
           },
+          // Siempre reemplazar la lista completa (no merge/append)
+          resultadosPorPartido: {
+            merge(existing, incoming) {
+              return incoming;
+            },
+          },
         },
       },
     },
   }),
   defaultOptions: {
     watchQuery: {
-      fetchPolicy: 'cache-and-network',
+      fetchPolicy: 'network-only',
     },
   },
 });

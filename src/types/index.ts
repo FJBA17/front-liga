@@ -47,6 +47,7 @@ export interface ResultadoSerie {
   golesLocal: number;
   golesVisitante: number;
   puntosInvertidos: boolean;
+  ganadorAdminId?: string;
   mensajeAjuste?: string;
 }
 

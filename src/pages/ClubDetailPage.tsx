@@ -10,6 +10,7 @@ import { GET_GOLEADORES_BY_CLUB } from '../graphql/queries/scorers';
 import { getClubLogo } from '../utils/clubImages';
 import { seriesColors, seriesNames } from '../utils/seriesColors';
 import { Club, Partido, TablaPosicion, Gol, ResultadoSerie } from '../types';
+import LazyImage from '../components/LazyImage';
 
 export default function ClubDetailPage() {
   const { id } = useParams();
@@ -60,6 +61,16 @@ export default function ClubDetailPage() {
   
   // Encontrar stats del club en la tabla
   const clubStats = tablaData?.tablaPosiciones.find((t: TablaPosicion) => t.club.id === id);
+
+  // LOG DIAGNÓSTICO - Dashboard del club (lo que ve la tabla)
+  if (clubStats) {
+    console.group(`[ClubDetailPage] DASHBOARD clubId=${id}`);
+    console.log('posicion:', clubStats.posicion);
+    console.log('puntos en tabla:', clubStats.puntos);
+    console.log('partidosJugados:', clubStats.partidosJugados);
+    console.log('golesAFavor:', clubStats.golesAFavor, '| golesEnContra:', clubStats.golesEnContra);
+    console.groupEnd();
+  }
 
   // Agrupar goles por serie y contar por jugador
   const goles = golesData?.golesPorClub || [];
@@ -117,7 +128,7 @@ export default function ClubDetailPage() {
       <div className="relative overflow-hidden bg-gradient-to-b from-premier-card/80 via-premier-bg/50 to-transparent py-16 mb-8">
         {/* Escudo gigante difuminado de fondo */}
         <div className="absolute inset-0 flex items-center justify-center opacity-5">
-          <img
+          <LazyImage
             src={getClubLogo(club.nombre)}
             alt=""
             className="w-[500px] h-[500px] md:w-[800px] md:h-[800px] object-contain blur-sm"
@@ -141,7 +152,7 @@ export default function ClubDetailPage() {
             animate={{ scale: 1, opacity: 1 }}
             className="text-center"
           >
-            <img
+            <LazyImage
               src={getClubLogo(club.nombre)}
               alt={club.nombre}
               className="w-40 h-40 md:w-56 md:h-56 object-contain mx-auto mb-6 drop-shadow-2xl"
@@ -387,7 +398,7 @@ export default function ClubDetailPage() {
                       </p>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 flex-1">
-                          <img
+                          <LazyImage
                             src={getClubLogo(partido.clubLocal?.nombre || '')}
                             className="w-6 h-6 object-contain"
                             alt=""
@@ -403,7 +414,7 @@ export default function ClubDetailPage() {
                           <span className="font-semibold text-sm truncate">
                             {partido.clubVisitante?.nombreCorto}
                           </span>
-                          <img
+                          <LazyImage
                             src={getClubLogo(partido.clubVisitante?.nombre || '')}
                             className="w-6 h-6 object-contain"
                             alt=""
@@ -443,16 +454,26 @@ interface PartidoPasadoCardProps {
 function PartidoPasadoCard({ partido, clubId, onClick }: PartidoPasadoCardProps) {
   const { data } = useQuery<{ resultadosPorPartido: ResultadoSerie[] }>(
     GET_RESULTADOS_BY_PARTIDO,
-    { variables: { partidoId: partido.id } }
+    { variables: { partidoId: partido.id }, fetchPolicy: 'network-only' }
   );
 
   const resultados = data?.resultadosPorPartido || [];
+
+  // LOG DIAGNÓSTICO - PartidoPasadoCard
+  console.group(`[PartidoPasadoCard] partidoId=${partido.id}`);
+  console.log('raw resultados count:', resultados.length);
+  resultados.forEach((r, i) => {
+    console.log(`  [${i}] serie=${r.tipoSerie} golesL=${r.golesLocal} golesV=${r.golesVisitante} puntosInvertidos=${r.puntosInvertidos} ganadorAdminId=${r.ganadorAdminId ?? 'null'} mensajeAjuste=${r.mensajeAjuste ?? 'null'}`);
+  });
+  console.groupEnd();
   
-  // Eliminar duplicados por serie (prevención de errores en DB)
+  // Eliminar duplicados por serie: si hay duplicados, preferir el que tiene puntosInvertidos=true
   const resultadosUnicos = resultados.reduce((acc, resultado) => {
-    const existe = acc.find(r => r.tipoSerie === resultado.tipoSerie);
-    if (!existe) {
+    const existingIdx = acc.findIndex(r => r.tipoSerie === resultado.tipoSerie);
+    if (existingIdx === -1) {
       acc.push(resultado);
+    } else if (!acc[existingIdx].puntosInvertidos && resultado.puntosInvertidos) {
+      acc[existingIdx] = resultado;
     }
     return acc;
   }, [] as ResultadoSerie[]);
@@ -464,13 +485,22 @@ function PartidoPasadoCard({ partido, clubId, onClick }: PartidoPasadoCardProps)
   resultadosUnicos.forEach(resultado => {
     const puntosVictoria = resultado.tipoSerie === 'PRIMERA' ? 4 : 3;
     const puntosEmpate = resultado.tipoSerie === 'PRIMERA' ? 2 : 1;
+
+    // ganadorAdminId tiene prioridad sobre el marcador y puntosInvertidos
+    if (resultado.ganadorAdminId) {
+      if (resultado.ganadorAdminId === partido.clubLocal?.id) {
+        puntosLocal += puntosVictoria;
+      } else {
+        puntosVisitante += puntosVictoria;
+      }
+      return;
+    }
     
     if (resultado.golesLocal > resultado.golesVisitante) {
       // Victoria local
       if (!resultado.puntosInvertidos) {
         puntosLocal += puntosVictoria;
       } else {
-        // Puntos invertidos: van al visitante
         puntosVisitante += puntosVictoria;
       }
     } else if (resultado.golesVisitante > resultado.golesLocal) {
@@ -478,7 +508,6 @@ function PartidoPasadoCard({ partido, clubId, onClick }: PartidoPasadoCardProps)
       if (!resultado.puntosInvertidos) {
         puntosVisitante += puntosVictoria;
       } else {
-        // Puntos invertidos: van al local
         puntosLocal += puntosVictoria;
       }
     } else {
@@ -487,13 +516,19 @@ function PartidoPasadoCard({ partido, clubId, onClick }: PartidoPasadoCardProps)
         puntosLocal += puntosEmpate;
         puntosVisitante += puntosEmpate;
       }
-      // Si hay inversión en empate, nadie recibe puntos
     }
   });
 
   const esLocal = partido.clubLocal?.id === clubId;
   const puntosClub = esLocal ? puntosLocal : puntosVisitante;
   const puntosRival = esLocal ? puntosVisitante : puntosLocal;
+
+  // LOG DIAGNÓSTICO - Puntajes calculados en PartidoPasadoCard
+  console.group(`[PartidoPasadoCard] PUNTAJES CALCULADOS J${partido.jornada.numero} - ${partido.clubLocal?.nombreCorto} vs ${partido.clubVisitante?.nombreCorto}`);
+  console.log(`  LOCAL (${partido.clubLocal?.nombreCorto}): ${puntosLocal} pts`);
+  console.log(`  VISITANTE (${partido.clubVisitante?.nombreCorto}): ${puntosVisitante} pts`);
+  console.log(`  YO soy: ${esLocal ? 'LOCAL' : 'VISITANTE'} → mis pts: ${puntosClub}, rival: ${puntosRival}`);
+  console.groupEnd();
 
   return (
     <div
@@ -505,7 +540,7 @@ function PartidoPasadoCard({ partido, clubId, onClick }: PartidoPasadoCardProps)
       </p>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 flex-1">
-          <img
+          <LazyImage
             src={getClubLogo(partido.clubLocal?.nombre || '')}
             className="w-6 h-6 object-contain"
             alt=""
@@ -530,7 +565,7 @@ function PartidoPasadoCard({ partido, clubId, onClick }: PartidoPasadoCardProps)
           <span className="font-semibold text-sm truncate">
             {partido.clubVisitante?.nombreCorto}
           </span>
-          <img
+          <LazyImage
             src={getClubLogo(partido.clubVisitante?.nombre || '')}
             className="w-6 h-6 object-contain"
             alt=""
@@ -557,19 +592,29 @@ function PartidoDetalleModal({ partidoId, clubId, onClose }: PartidoDetalleModal
     { variables: { clubId } }
   );
 
-  const { data: resultadosData } = useQuery<{ resultadosPorPartido: ResultadoSerie[] }>(
+  const { data: resultadosData, loading: loadingResultados } = useQuery<{ resultadosPorPartido: ResultadoSerie[] }>(
     GET_RESULTADOS_BY_PARTIDO,
-    { variables: { partidoId } }
+    { variables: { partidoId }, fetchPolicy: 'no-cache' }
   );
 
   const partido = matchData?.partidosPorClub.find(p => p.id === partidoId);
   const resultados = resultadosData?.resultadosPorPartido || [];
 
-  // Eliminar duplicados por serie (prevención de errores en DB)
+  // LOG DIAGNÓSTICO - PartidoDetalleModal
+  console.group(`[PartidoDetalleModal] partidoId=${partidoId} loading=${loadingResultados}`);
+  console.log('raw resultados count:', resultados.length);
+  resultados.forEach((r, i) => {
+    console.log(`  [${i}] serie=${r.tipoSerie} golesL=${r.golesLocal} golesV=${r.golesVisitante} puntosInvertidos=${r.puntosInvertidos} ganadorAdminId=${r.ganadorAdminId ?? 'null'} mensajeAjuste=${r.mensajeAjuste ?? 'null'}`);
+  });
+  console.groupEnd();
+
+  // Eliminar duplicados por serie: si hay duplicados, preferir el que tiene puntosInvertidos=true
   const resultadosUnicos = resultados.reduce((acc, resultado) => {
-    const existe = acc.find(r => r.tipoSerie === resultado.tipoSerie);
-    if (!existe) {
+    const existingIdx = acc.findIndex(r => r.tipoSerie === resultado.tipoSerie);
+    if (existingIdx === -1) {
       acc.push(resultado);
+    } else if (!acc[existingIdx].puntosInvertidos && resultado.puntosInvertidos) {
+      acc[existingIdx] = resultado;
     }
     return acc;
   }, [] as ResultadoSerie[]);
@@ -619,7 +664,7 @@ function PartidoDetalleModal({ partidoId, clubId, onClose }: PartidoDetalleModal
           <div className="grid grid-cols-[1fr_auto_1fr] gap-6 items-center">
             {/* Club Local */}
             <div className="text-center">
-              <img
+              <LazyImage
                 src={getClubLogo(partido.clubLocal?.nombre || '')}
                 className="w-16 h-16 md:w-20 md:h-20 object-contain mx-auto mb-3"
                 alt=""
@@ -632,14 +677,15 @@ function PartidoDetalleModal({ partidoId, clubId, onClose }: PartidoDetalleModal
                   {resultadosUnicos.reduce((acc, r) => {
                     const puntosVictoria = r.tipoSerie === 'PRIMERA' ? 4 : 3;
                     const puntosEmpate = r.tipoSerie === 'PRIMERA' ? 2 : 1;
-                    
+                    if (r.ganadorAdminId) {
+                      return acc + (r.ganadorAdminId === partido.clubLocal?.id ? puntosVictoria : 0);
+                    }
                     if (r.golesLocal > r.golesVisitante) {
                       return acc + (r.puntosInvertidos ? 0 : puntosVictoria);
                     }
                     if (r.golesVisitante > r.golesLocal) {
                       return acc + (r.puntosInvertidos ? puntosVictoria : 0);
                     }
-                    // Empate
                     return acc + (r.puntosInvertidos ? 0 : puntosEmpate);
                   }, 0)}
                 </span>
@@ -648,16 +694,18 @@ function PartidoDetalleModal({ partidoId, clubId, onClose }: PartidoDetalleModal
             </div>
             
             {/* Separador */}
-            <div className="flex flex-col items-center gap-2">
-              <div className="text-3xl font-black text-premier-muted">VS</div>
-              <div className="text-[10px] text-premier-muted/70 uppercase tracking-wider">
-                Jornada {partido.jornada.numero}
-              </div>
+            <div className="flex flex-col items-center gap-1.5">
+              <div className="h-8 w-px bg-premier-border/40"></div>
+              <span className="text-[10px] font-bold text-premier-muted/60 uppercase tracking-widest px-2">vs</span>
+              <div className="h-8 w-px bg-premier-border/40"></div>
+              <span className="text-[9px] text-premier-muted/50 uppercase tracking-wider mt-1">
+                J{partido.jornada.numero}
+              </span>
             </div>
             
             {/* Club Visitante */}
             <div className="text-center">
-              <img
+              <LazyImage
                 src={getClubLogo(partido.clubVisitante?.nombre || '')}
                 className="w-16 h-16 md:w-20 md:h-20 object-contain mx-auto mb-3"
                 alt=""
@@ -670,14 +718,15 @@ function PartidoDetalleModal({ partidoId, clubId, onClose }: PartidoDetalleModal
                   {resultadosUnicos.reduce((acc, r) => {
                     const puntosVictoria = r.tipoSerie === 'PRIMERA' ? 4 : 3;
                     const puntosEmpate = r.tipoSerie === 'PRIMERA' ? 2 : 1;
-                    
+                    if (r.ganadorAdminId) {
+                      return acc + (r.ganadorAdminId === partido.clubVisitante?.id ? puntosVictoria : 0);
+                    }
                     if (r.golesVisitante > r.golesLocal) {
                       return acc + (r.puntosInvertidos ? 0 : puntosVictoria);
                     }
                     if (r.golesLocal > r.golesVisitante) {
                       return acc + (r.puntosInvertidos ? puntosVictoria : 0);
                     }
-                    // Empate
                     return acc + (r.puntosInvertidos ? 0 : puntosEmpate);
                   }, 0)}
                 </span>
@@ -735,21 +784,37 @@ function PartidoDetalleModal({ partidoId, clubId, onClose }: PartidoDetalleModal
                       </span>
                     </div>
                     
-                    {/* Badge de Puntos */}
-                    <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide min-w-[70px] text-center ${
-                      empate 
-                        ? 'bg-white/10 text-white border border-white/30'
-                        : ganadorLocal
-                        ? 'bg-premier-accent/20 text-premier-accent border border-premier-accent/30'
-                        : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                    }`}>
-                      {empate 
-                        ? serie === 'PRIMERA' ? '+2 c/u' : '+1 c/u'
-                        : ganadorLocal 
-                        ? `${partido.clubLocal?.nombreCorto} +${serie === 'PRIMERA' ? '4' : '3'}` 
-                        : `${partido.clubVisitante?.nombreCorto} +${serie === 'PRIMERA' ? '4' : '3'}`
-                      }
-                    </div>
+                    {/* Badge de Puntos - respeta ganadorAdminId y puntosInvertidos */}
+                    {(() => {
+                      const pts = serie === 'PRIMERA' ? '4' : '3';
+                      const ganadorAdmin = resultado.ganadorAdminId
+                        ? (resultado.ganadorAdminId === partido.clubLocal?.id ? partido.clubLocal : partido.clubVisitante)
+                        : null;
+                      return (
+                        <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide min-w-[70px] text-center ${
+                          resultado.ganadorAdminId || resultado.puntosInvertidos
+                            ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30'
+                            : empate 
+                            ? 'bg-white/10 text-white border border-white/30'
+                            : ganadorLocal
+                            ? 'bg-premier-accent/20 text-premier-accent border border-premier-accent/30'
+                            : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                        }`}>
+                          {resultado.ganadorAdminId
+                            ? `${ganadorAdmin?.nombreCorto} +${pts} (Sec.)`
+                            : resultado.puntosInvertidos
+                            ? empate
+                              ? 'Sin puntos'
+                              : `${(ganadorLocal ? partido.clubVisitante : partido.clubLocal)?.nombreCorto} +${pts}`
+                            : empate 
+                            ? serie === 'PRIMERA' ? '+2 c/u' : '+1 c/u'
+                            : ganadorLocal 
+                            ? `${partido.clubLocal?.nombreCorto} +${pts}` 
+                            : `${partido.clubVisitante?.nombreCorto} +${pts}`
+                          }
+                        </div>
+                      );
+                    })()}
                   </div>
                   
                   {/* Mensaje de ajuste de puntos */}
