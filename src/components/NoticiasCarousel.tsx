@@ -112,8 +112,6 @@ export default function NoticiasCarousel() {
                 >
                   {tipo.icon}
                   {tipo.label}
-                  <span className="opacity-40 mx-0.5">·</span>
-                  <span className="font-normal normal-case tracking-normal opacity-70">{fecha}</span>
                 </div>
 
                 <h3 className="text-white font-black text-2xl md:text-3xl leading-tight mb-4">
