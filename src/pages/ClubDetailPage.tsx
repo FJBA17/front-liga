@@ -11,6 +11,7 @@ import { getClubLogo } from '../utils/clubImages';
 import { seriesColors, seriesNames } from '../utils/seriesColors';
 import { Club, Partido, TablaPosicion, Gol, ResultadoSerie } from '../types';
 import LazyImage from '../components/LazyImage';
+import LoadingScreen from '../components/LoadingScreen';
 
 export default function ClubDetailPage() {
   const { id } = useParams();
@@ -44,15 +45,7 @@ export default function ClubDetailPage() {
     }
   );
   
-  if (clubLoading) {
-    return (
-      <div className="container-custom py-12">
-        <div className="card p-12 animate-pulse">
-          <div className="h-64 bg-premier-border/20 rounded"></div>
-        </div>
-      </div>
-    );
-  }
+  if (clubLoading) return <LoadingScreen />;
   
   const club = clubData?.club;
   const partidos = matchesData?.partidosPorClub || [];
