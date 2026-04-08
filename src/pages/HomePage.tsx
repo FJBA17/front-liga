@@ -1,13 +1,11 @@
-import { motion } from 'framer-motion';
 import { useQuery } from '@apollo/client';
 import { Link } from 'react-router-dom';
 import { GET_CLUBES } from '../graphql/queries/clubs';
 import { GET_TABLA_POSICIONES } from '../graphql/queries/standings';
-import { GET_JORNADAS } from '../graphql/queries/matches';
 import { GET_GOLEADORES_POR_SERIE } from '../graphql/queries/scorers';
 import { getClubLogo } from '../utils/clubImages';
-import { Club, TablaPosicion, Jornada, GoleadorPorSerie } from '../types';
-import { FaTrophy, FaCalendar, FaFutbol } from 'react-icons/fa';
+import { Club, TablaPosicion, GoleadorPorSerie } from '../types';
+import { FaTrophy, FaFutbol } from 'react-icons/fa';
 import NoticiasCarousel from '../components/NoticiasCarousel';
 import LoadingScreen from '../components/LoadingScreen';
 import LazyImage from '../components/LazyImage';
@@ -15,18 +13,12 @@ import LazyImage from '../components/LazyImage';
 export default function HomePage() {
   const { data: clubesData, loading: loadingClubes } = useQuery<{ clubes: Club[] }>(GET_CLUBES);
   const { data: tablaData, loading: loadingTabla } = useQuery<{ tablaPosiciones: TablaPosicion[] }>(GET_TABLA_POSICIONES);
-  const { data: jornadasData } = useQuery<{ jornadas: Jornada[] }>(GET_JORNADAS);
   const { data: goleadoresData } = useQuery<{ goleadoresPorSerie: GoleadorPorSerie[] }>(GET_GOLEADORES_POR_SERIE);
 
   if (loadingClubes || loadingTabla) return <LoadingScreen />;
 
   const clubes = clubesData?.clubes || [];
   const tabla = (tablaData?.tablaPosiciones || []).slice(0, 9);
-  const lider = tabla[0];
-  const proximasJornadas = (jornadasData?.jornadas || [])
-    .filter(j => j.estado === 'ACTIVA')
-    .slice(0, 3);
-  
   const goleadoresPorSerie = goleadoresData?.goleadoresPorSerie || [];
   const series = ['TERCERA', 'SEGUNDA', 'SENIOR', 'PRIMERA'];
   const seriesLabels = {
@@ -47,11 +39,7 @@ export default function HomePage() {
       
       {/* Tabla de Posiciones */}
       <section className="container-custom py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-7xl mx-auto"
-        >
+        <div className="max-w-7xl mx-auto">
           <div className="card p-4 md:p-8">
             <div className="flex items-center gap-3 mb-6">
               <FaTrophy className="text-premier-accent text-2xl" />
@@ -75,12 +63,9 @@ export default function HomePage() {
               {/* Filas */}
               <div>
                 {tabla.map((item, idx) => (
-                  <motion.div
+                  <div
                     key={item.club.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="grid grid-cols-[60px_60px_1fr_80px_80px_80px_80px_100px] gap-4 items-center px-4 py-2.5 border-b border-premier-border/20 transition-all duration-200 hover:bg-premier-accent/5"
+                    className="grid grid-cols-[60px_60px_1fr_80px_80px_80px_80px_100px] gap-4 items-center px-4 py-2.5 border-b border-premier-border/20 hover:bg-premier-accent/5"
                   >
                     {/* Posición */}
                     <div className="flex justify-center">
@@ -137,11 +122,11 @@ export default function HomePage() {
                     <span className="text-center font-black text-xl text-white">
                       {item.puntos}
                     </span>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </div>
-
+            
             {/* Tabla Mobile - Vista con Scroll */}
             <div className="md:hidden flex gap-0 overflow-hidden">
               {/* PARTE FIJA - Posición y Logo solamente */}
@@ -157,7 +142,7 @@ export default function HomePage() {
                   {tabla.map((item, idx) => (
                     <div
                       key={`fixed-${item.club.id}`}
-                      className="grid grid-cols-[50px_50px] gap-2 items-center px-2 h-[52px] border-b border-r-2 border-premier-border/20 transition-all duration-200 hover:bg-premier-accent/5"
+                      className="grid grid-cols-[50px_50px] gap-2 items-center px-2 h-[52px] border-b border-r-2 border-premier-border/20 hover:bg-premier-accent/5"
                     >
                       {/* Posición */}
                       <div className="flex justify-center">
@@ -203,7 +188,7 @@ export default function HomePage() {
                   {tabla.map((item, idx) => (
                     <div
                       key={`scroll-${item.club.id}`}
-                      className="grid grid-cols-[60px_60px_60px_60px_80px] gap-2 items-center px-2 h-[52px] border-b border-premier-border/20 transition-all duration-200 hover:bg-premier-accent/5"
+                      className="grid grid-cols-[60px_60px_60px_60px_80px] gap-2 items-center px-2 h-[52px] border-b border-premier-border/20 hover:bg-premier-accent/5"
                     >
                       {/* PJ */}
                       <span className="text-center text-premier-text text-sm font-medium">
@@ -237,7 +222,7 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </section>
 
       {/* Noticias y Avisos */}
@@ -245,11 +230,7 @@ export default function HomePage() {
 
       {/* Sección Goleadores por Serie */}
       <section className="container-custom py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
+        <div>
           <h2 className="text-3xl font-black text-white mb-8 flex items-center gap-3">
             <FaFutbol className="text-premier-accent" />
             <span>Goleadores por Serie</span>
@@ -264,11 +245,8 @@ export default function HomePage() {
               const lider = goleadoresSerie[0];
               
               return (
-                <motion.div
+                <div
                   key={serie}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 + idx * 0.1 }}
                   className="card p-3 lg:p-6"
                 >
                   {/* Título de la serie */}
@@ -289,6 +267,8 @@ export default function HomePage() {
                           <img
                             src={getClubLogo(lider.jugador.club.nombre)}
                             alt={lider.jugador.club.nombreCorto}
+                            loading="lazy"
+                            decoding="async"
                             className="w-16 h-16 lg:w-24 lg:h-24 object-contain"
                           />
                           <div className="absolute -bottom-1 -right-1 lg:-bottom-2 lg:-right-2 w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-premier-accent flex items-center justify-center border-2 lg:border-4 border-premier-card">
@@ -320,6 +300,8 @@ export default function HomePage() {
                             <img
                               src={getClubLogo(goleador.jugador.club.nombre)}
                               alt={goleador.jugador.club.nombreCorto}
+                              loading="lazy"
+                              decoding="async"
                               className="w-5 h-5 lg:w-8 lg:h-8 object-contain"
                             />
                             <div className="flex-1 min-w-0">
@@ -340,53 +322,41 @@ export default function HomePage() {
                       <p className="text-xs lg:text-base">Sin goleadores aún</p>
                     </div>
                   )}
-                </motion.div>
+                </div>
               );
             })}
           </div>
-        </motion.div>
+        </div>
       </section>
 
       {/* Sección Clubes - Grid inferior */}
       <section className="container-custom pb-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
+        <div>
           <h2 className="text-3xl font-black text-white mb-8 flex items-center gap-3">
             <span>Clubes Participantes</span>
             <span className="text-premier-accent text-xl">({clubes.length})</span>
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {clubes.map((club, index) => (
+            {clubes.map((club) => (
               <Link key={club.id} to={`/clubes/${club.id}`}>
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.6 + index * 0.03 }}
-                  whileHover={{ y: -8, scale: 1.03 }}
-                  className="card card-hover aspect-square p-5 flex flex-col items-center justify-center gap-3 cursor-pointer group relative overflow-hidden"
+                <div
+                  className="card aspect-square p-5 flex flex-col items-center justify-center gap-3 cursor-pointer group hover:-translate-y-1 transition-transform duration-200"
                 >
-                  {/* Gradiente hover */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-premier-accent/0 to-premier-accent/0 group-hover:from-premier-accent/10 group-hover:to-transparent transition-all duration-300" />
-                  
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-premier-accent/0 blur-xl group-hover:bg-premier-accent/20 transition-all duration-300" />
-                    <img
-                      src={getClubLogo(club.nombre)}
-                      alt={club.nombre}
-                      className="w-20 h-20 object-contain drop-shadow-lg relative z-10 group-hover:scale-110 transition-transform duration-300"
-                    />
-                  </div>
-                  <h3 className="text-sm font-bold text-center text-premier-text group-hover:text-white transition-colors relative z-10">
+                  <img
+                    src={getClubLogo(club.nombre)}
+                    alt={club.nombre}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-20 h-20 object-contain group-hover:scale-105 transition-transform duration-200"
+                  />
+                  <h3 className="text-sm font-bold text-center text-premier-text group-hover:text-white transition-colors">
                     {club.nombreCorto}
                   </h3>
-                </motion.div>
+                </div>
               </Link>
             ))}
           </div>
-        </motion.div>
+        </div>
       </section>
     </div>
   );

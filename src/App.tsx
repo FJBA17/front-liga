@@ -1,12 +1,15 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import HomePage from './pages/HomePage';
-import ClubsPage from './pages/ClubsPage';
-import ClubDetailPage from './pages/ClubDetailPage';
-import FixturePage from './pages/FixturePage';
-import ScorersPage from './pages/ScorersPage';
+import LoadingScreen from './components/LoadingScreen';
+
+const ClubsPage = lazy(() => import('./pages/ClubsPage'));
+const ClubDetailPage = lazy(() => import('./pages/ClubDetailPage'));
+const FixturePage = lazy(() => import('./pages/FixturePage'));
+const ScorersPage = lazy(() => import('./pages/ScorersPage'));
 
 function App() {
   return (
@@ -15,13 +18,15 @@ function App() {
         <Header />
         <main className="flex-1">
           <AnimatePresence mode="wait">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/clubes" element={<ClubsPage />} />
-              <Route path="/clubes/:id" element={<ClubDetailPage />} />
-              <Route path="/fixture" element={<FixturePage />} />
-              <Route path="/goleadores" element={<ScorersPage />} />
-            </Routes>
+            <Suspense fallback={<LoadingScreen />}>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/clubes" element={<ClubsPage />} />
+                <Route path="/clubes/:id" element={<ClubDetailPage />} />
+                <Route path="/fixture" element={<FixturePage />} />
+                <Route path="/goleadores" element={<ScorersPage />} />
+              </Routes>
+            </Suspense>
           </AnimatePresence>
         </main>
         <Footer />

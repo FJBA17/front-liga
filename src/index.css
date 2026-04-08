@@ -6,6 +6,7 @@
   src: url('./assets/fonts/Radikal UltraThin.otf') format('opentype');
   font-weight: 100;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -13,6 +14,7 @@
   src: url('./assets/fonts/Radikal UltraThin Italic.otf') format('opentype');
   font-weight: 100;
   font-style: italic;
+  font-display: swap;
 }
 
 @font-face {
@@ -20,6 +22,7 @@
   src: url('./assets/fonts/Radikal Thin.otf') format('opentype');
   font-weight: 200;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -27,6 +30,7 @@
   src: url('./assets/fonts/Radikal Thin Italic.otf') format('opentype');
   font-weight: 200;
   font-style: italic;
+  font-display: swap;
 }
 
 @font-face {
@@ -34,6 +38,7 @@
   src: url('./assets/fonts/Radikal Light.otf') format('opentype');
   font-weight: 300;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -41,6 +46,7 @@
   src: url('./assets/fonts/Radikal Light Italic.otf') format('opentype');
   font-weight: 300;
   font-style: italic;
+  font-display: swap;
 }
 
 @font-face {
@@ -48,6 +54,7 @@
   src: url('./assets/fonts/Radikal Regular.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -55,6 +62,7 @@
   src: url('./assets/fonts/Radikal Italic.otf') format('opentype');
   font-weight: 400;
   font-style: italic;
+  font-display: swap;
 }
 
 @font-face {
@@ -62,6 +70,7 @@
   src: url('./assets/fonts/Radikal Medium.otf') format('opentype');
   font-weight: 500;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -69,6 +78,7 @@
   src: url('./assets/fonts/Radikal Medium Italic.otf') format('opentype');
   font-weight: 500;
   font-style: italic;
+  font-display: swap;
 }
 
 @font-face {
@@ -76,6 +86,7 @@
   src: url('./assets/fonts/Radikal Bold.otf') format('opentype');
   font-weight: 700;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -83,6 +94,7 @@
   src: url('./assets/fonts/Radikal Bold Italic.otf') format('opentype');
   font-weight: 700;
   font-style: italic;
+  font-display: swap;
 }
 
 @font-face {
@@ -90,6 +102,7 @@
   src: url('./assets/fonts/Radikal Black.otf') format('opentype');
   font-weight: 900;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -97,6 +110,7 @@
   src: url('./assets/fonts/Radikal Black Italic.otf') format('opentype');
   font-weight: 900;
   font-style: italic;
+  font-display: swap;
 }
 
 @theme {
@@ -124,7 +138,6 @@ body {
   background: 
     linear-gradient(rgba(55, 0, 60, 0.85), rgba(55, 0, 60, 0.85)),
     url('./assets/fondo.jpg');
-  background-attachment: fixed;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -143,15 +156,17 @@ body {
 
 /* Card styles */
 .card {
-  background: rgba(74, 6, 56, 0.7);
-  backdrop-filter: blur(20px);
+  background: rgba(74, 6, 56, 0.92);
   border-radius: 1rem;
   border: 1px solid rgba(199, 21, 133, 0.2);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
 .card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
 }
 
 .card-hover:hover {
@@ -167,7 +182,7 @@ body {
   color: white;
   border-radius: 0.5rem;
   font-weight: 600;
-  transition: all 0.2s;
+  transition: background-color 0.2s, transform 0.2s;
 }
 
 .btn-primary:hover {
@@ -247,8 +262,7 @@ body {
 
 /* Glass effect */
 .glass {
-  background: rgba(74, 6, 56, 0.8);
-  backdrop-filter: blur(20px);
+  background: rgba(74, 6, 56, 0.95);
   border: 1px solid rgba(199, 21, 133, 0.2);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
