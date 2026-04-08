@@ -108,7 +108,7 @@ export default function JornadaDetailPage() {
                 <div className="flex flex-wrap items-center gap-4 text-premier-muted">
                   <div className="flex items-center gap-2">
                     <FaCalendar className="text-premier-accent" />
-                    <span>{new Date(jornada.fecha.slice(0, 10) + 'T12:00:00').toLocaleDateString('es-AR', { 
+                    <span>{new Date(jornada.fecha).toLocaleDateString('es-AR', { 
                       weekday: 'long', 
                       year: 'numeric', 
                       month: 'long', 

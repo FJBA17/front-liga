@@ -93,7 +93,7 @@ export default function FixturePage() {
                   </div>
                   <div className="text-xs opacity-75 flex items-center gap-1">
                     <FaCalendar className="text-xs" />
-                    {new Date(jornada.fecha.slice(0, 10) + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
+                    {new Date(jornada.fecha).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
                   </div>
                   <div className="text-xs opacity-75 flex items-center gap-1 mt-1">
                     <FaClock className="text-xs" />
