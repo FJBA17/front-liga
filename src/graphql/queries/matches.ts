@@ -80,3 +80,23 @@ export const GET_RESULTADOS_BY_PARTIDO = gql`
     }
   }
 `;
+
+export const GET_GOLES_POR_PARTIDO = gql`
+  query GetGolesPorPartido($partidoId: ID!) {
+    golesPorPartido(partidoId: $partidoId) {
+      id
+      club {
+        id
+      }
+      jugador {
+        id
+        nombre1
+        apellido1
+        apellido2
+      }
+      resultadoSerie {
+        tipoSerie
+      }
+    }
+  }
+`;

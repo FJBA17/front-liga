@@ -97,7 +97,7 @@ export default function FixturePage() {
                   </div>
                   <div className="text-xs opacity-75 flex items-center gap-1 mt-1">
                     <FaClock className="text-xs" />
-                    {jornada.hora}
+                    {jornada.hora?.slice(0, 5)}
                   </div>
                   {jornada.esSegundaVuelta && (
                     <div className="mt-2 text-xs font-bold opacity-90">2da Vuelta</div>

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import { FaTrophy, FaChartLine, FaArrowLeft, FaInstagram, FaMapMarkerAlt, FaTimes } from 'react-icons/fa';
 import { GET_CLUB_BY_ID } from '../graphql/queries/clubs';
-import { GET_PARTIDOS_BY_CLUB, GET_RESULTADOS_BY_PARTIDO } from '../graphql/queries/matches';
+import { GET_PARTIDOS_BY_CLUB, GET_RESULTADOS_BY_PARTIDO, GET_GOLES_POR_PARTIDO } from '../graphql/queries/matches';
 import { GET_TABLA_POSICIONES } from '../graphql/queries/standings';
 import { GET_GOLEADORES_BY_CLUB } from '../graphql/queries/scorers';
 import { getClubLogo } from '../utils/clubImages';
@@ -29,7 +29,8 @@ export default function ClubDetailPage() {
   );
 
   const { data: tablaData } = useQuery<{ tablaPosiciones: TablaPosicion[] }>(
-    GET_TABLA_POSICIONES
+    GET_TABLA_POSICIONES,
+    { fetchPolicy: 'cache-first' }
   );
 
   const { data: golesData } = useQuery<{ golesPorClub: Gol[] }>(
@@ -54,16 +55,6 @@ export default function ClubDetailPage() {
   
   // Encontrar stats del club en la tabla
   const clubStats = tablaData?.tablaPosiciones.find((t: TablaPosicion) => t.club.id === id);
-
-  // LOG DIAGNÓSTICO - Dashboard del club (lo que ve la tabla)
-  if (clubStats) {
-    console.group(`[ClubDetailPage] DASHBOARD clubId=${id}`);
-    console.log('posicion:', clubStats.posicion);
-    console.log('puntos en tabla:', clubStats.puntos);
-    console.log('partidosJugados:', clubStats.partidosJugados);
-    console.log('golesAFavor:', clubStats.golesAFavor, '| golesEnContra:', clubStats.golesEnContra);
-    console.groupEnd();
-  }
 
   // Agrupar goles por serie y contar por jugador
   const goles = golesData?.golesPorClub || [];
@@ -95,14 +86,6 @@ export default function ClubDetailPage() {
     goleadoresPorSerie[serie] = goleadoresPorSerie[serie].slice(0, 3);
   });
 
-  // Función para calcular puntos de un partido
-  const calcularPuntosPartido = (partidoId: string) => {
-    // Esta función será llamada para cada partido pasado, 
-    // pero necesitamos los resultados específicos del partido
-    // Por ahora retornamos null y lo manejaremos en el componente hijo
-    return null;
-  };
-  
   if (!club) {
     return (
       <div className="container-custom py-12 text-center">
@@ -201,7 +184,7 @@ export default function ClubDetailPage() {
             
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-6">
-                <p className="text-premier-accent text-sm font-bold uppercase tracking-widest">Temporada 2025/26</p>
+                <p className="text-premier-accent text-sm font-bold uppercase tracking-widest">Temporada 2026</p>
               </div>
 
               {/* Stats Bar - Horizontal */}
@@ -387,7 +370,7 @@ export default function ClubDetailPage() {
                       className="bg-premier-bg/50 rounded-lg p-3 border border-premier-accent/30 hover:border-premier-accent/50 transition-colors"
                     >
                       <p className="text-xs text-premier-accent mb-2">
-                        Jornada {partido.jornada.numero} • {partido.jornada.hora}
+                        Jornada {partido.jornada.numero} • {partido.jornada.hora?.slice(0, 5)}
                       </p>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 flex-1">
@@ -447,19 +430,11 @@ interface PartidoPasadoCardProps {
 function PartidoPasadoCard({ partido, clubId, onClick }: PartidoPasadoCardProps) {
   const { data } = useQuery<{ resultadosPorPartido: ResultadoSerie[] }>(
     GET_RESULTADOS_BY_PARTIDO,
-    { variables: { partidoId: partido.id }, fetchPolicy: 'network-only' }
+    { variables: { partidoId: partido.id }, fetchPolicy: 'cache-first' }
   );
 
   const resultados = data?.resultadosPorPartido || [];
 
-  // LOG DIAGNÓSTICO - PartidoPasadoCard
-  console.group(`[PartidoPasadoCard] partidoId=${partido.id}`);
-  console.log('raw resultados count:', resultados.length);
-  resultados.forEach((r, i) => {
-    console.log(`  [${i}] serie=${r.tipoSerie} golesL=${r.golesLocal} golesV=${r.golesVisitante} puntosInvertidos=${r.puntosInvertidos} ganadorAdminId=${r.ganadorAdminId ?? 'null'} mensajeAjuste=${r.mensajeAjuste ?? 'null'}`);
-  });
-  console.groupEnd();
-  
   // Eliminar duplicados por serie: si hay duplicados, preferir el que tiene puntosInvertidos=true
   const resultadosUnicos = resultados.reduce((acc, resultado) => {
     const existingIdx = acc.findIndex(r => r.tipoSerie === resultado.tipoSerie);
@@ -515,13 +490,6 @@ function PartidoPasadoCard({ partido, clubId, onClick }: PartidoPasadoCardProps)
   const esLocal = partido.clubLocal?.id === clubId;
   const puntosClub = esLocal ? puntosLocal : puntosVisitante;
   const puntosRival = esLocal ? puntosVisitante : puntosLocal;
-
-  // LOG DIAGNÓSTICO - Puntajes calculados en PartidoPasadoCard
-  console.group(`[PartidoPasadoCard] PUNTAJES CALCULADOS J${partido.jornada.numero} - ${partido.clubLocal?.nombreCorto} vs ${partido.clubVisitante?.nombreCorto}`);
-  console.log(`  LOCAL (${partido.clubLocal?.nombreCorto}): ${puntosLocal} pts`);
-  console.log(`  VISITANTE (${partido.clubVisitante?.nombreCorto}): ${puntosVisitante} pts`);
-  console.log(`  YO soy: ${esLocal ? 'LOCAL' : 'VISITANTE'} → mis pts: ${puntosClub}, rival: ${puntosRival}`);
-  console.groupEnd();
 
   return (
     <div
@@ -587,19 +555,17 @@ function PartidoDetalleModal({ partidoId, clubId, onClose }: PartidoDetalleModal
 
   const { data: resultadosData, loading: loadingResultados } = useQuery<{ resultadosPorPartido: ResultadoSerie[] }>(
     GET_RESULTADOS_BY_PARTIDO,
-    { variables: { partidoId }, fetchPolicy: 'no-cache' }
+    { variables: { partidoId }, fetchPolicy: 'cache-first' }
   );
 
-  const partido = matchData?.partidosPorClub.find(p => p.id === partidoId);
-  const resultados = resultadosData?.resultadosPorPartido || [];
+  const { data: golesData } = useQuery<{ golesPorPartido: Gol[] }>(
+    GET_GOLES_POR_PARTIDO,
+    { variables: { partidoId }, fetchPolicy: 'cache-first' }
+  );
 
-  // LOG DIAGNÓSTICO - PartidoDetalleModal
-  console.group(`[PartidoDetalleModal] partidoId=${partidoId} loading=${loadingResultados}`);
-  console.log('raw resultados count:', resultados.length);
-  resultados.forEach((r, i) => {
-    console.log(`  [${i}] serie=${r.tipoSerie} golesL=${r.golesLocal} golesV=${r.golesVisitante} puntosInvertidos=${r.puntosInvertidos} ganadorAdminId=${r.ganadorAdminId ?? 'null'} mensajeAjuste=${r.mensajeAjuste ?? 'null'}`);
-  });
-  console.groupEnd();
+  const goles = golesData?.golesPorPartido || [];
+  const resultados = resultadosData?.resultadosPorPartido || [];
+  const partido = matchData?.partidosPorClub.find(p => p.id === partidoId);
 
   // Eliminar duplicados por serie: si hay duplicados, preferir el que tiene puntosInvertidos=true
   const resultadosUnicos = resultados.reduce((acc, resultado) => {
@@ -638,7 +604,7 @@ function PartidoDetalleModal({ partidoId, clubId, onClose }: PartidoDetalleModal
               Detalle del Partido
             </h2>
             <p className="text-premier-muted text-sm">
-              Jornada {partido.jornada.numero} • {new Date(partido.jornada.fecha).toLocaleDateString('es-AR')} • {partido.jornada.hora}
+              Jornada {partido.jornada.numero} • {new Date(partido.jornada.fecha).toLocaleDateString('es-AR')} • {partido.jornada.hora?.slice(0, 5)}
             </p>
           </div>
           <button
@@ -824,6 +790,41 @@ function PartidoDetalleModal({ partidoId, clubId, onClose }: PartidoDetalleModal
                       </div>
                     </div>
                   )}
+
+                  {/* Goleadores de esta serie */}
+                  {(() => {
+                    const golesLocal = goles.filter(
+                      g => g.resultadoSerie?.tipoSerie === serie && g.club.id === partido.clubLocal?.id
+                    );
+                    const golesVisitante = goles.filter(
+                      g => g.resultadoSerie?.tipoSerie === serie && g.club.id === partido.clubVisitante?.id
+                    );
+                    if (golesLocal.length === 0 && golesVisitante.length === 0) return null;
+                    return (
+                      <div className="mt-2 pt-2 border-t border-premier-border/20">
+                        <div className="grid grid-cols-2 gap-2 text-[11px]">
+                          {/* Local */}
+                          <div className="space-y-0.5">
+                            {golesLocal.map((g) => (
+                              <div key={g.id} className="flex items-center gap-1 text-premier-muted">
+                                <span className="text-white/40">⚽</span>
+                                <span>{g.jugador ? `${g.jugador.nombre1} ${g.jugador.apellido1}` : 'Sin asignar'}</span>
+                              </div>
+                            ))}
+                          </div>
+                          {/* Visitante */}
+                          <div className="space-y-0.5 text-right">
+                            {golesVisitante.map((g) => (
+                              <div key={g.id} className="flex items-center justify-end gap-1 text-premier-muted">
+                                <span>{g.jugador ? `${g.jugador.nombre1} ${g.jugador.apellido1}` : 'Sin asignar'}</span>
+                                <span className="text-white/40">⚽</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })}

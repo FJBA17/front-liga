@@ -20,3 +20,19 @@ export const GET_TABLA_POSICIONES = gql`
     }
   }
 `;
+
+export const GET_GOLES_ENCAJADOS_POR_SERIE = gql`
+  query GetGolesEncajadosPorSerie {
+    golesEncajadosPorSerie {
+      serie
+      clubes {
+        club {
+          id
+          nombre
+          nombreCorto
+        }
+        golesEncajados
+      }
+    }
+  }
+`;

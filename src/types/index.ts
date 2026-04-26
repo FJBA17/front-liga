@@ -83,6 +83,16 @@ export interface GoleadorPorSerie {
   goles: number;
 }
 
+export interface GolesEncajadosClub {
+  club: Club;
+  golesEncajados: number;
+}
+
+export interface GolesEncajadosPorSerie {
+  serie: string;
+  clubes: GolesEncajadosClub[];
+}
+
 export enum TipoSerie {
   TERCERA = 'TERCERA',
   SEGUNDA = 'SEGUNDA',

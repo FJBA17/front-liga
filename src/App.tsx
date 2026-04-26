@@ -10,6 +10,7 @@ const ClubsPage = lazy(() => import('./pages/ClubsPage'));
 const ClubDetailPage = lazy(() => import('./pages/ClubDetailPage'));
 const FixturePage = lazy(() => import('./pages/FixturePage'));
 const ScorersPage = lazy(() => import('./pages/ScorersPage'));
+const VallasPage = lazy(() => import('./pages/VallasPage'));
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
                 <Route path="/clubes/:id" element={<ClubDetailPage />} />
                 <Route path="/fixture" element={<FixturePage />} />
                 <Route path="/goleadores" element={<ScorersPage />} />
+                <Route path="/vallas" element={<VallasPage />} />
               </Routes>
             </Suspense>
           </AnimatePresence>

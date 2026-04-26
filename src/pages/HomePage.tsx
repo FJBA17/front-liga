@@ -9,6 +9,7 @@ import { FaTrophy, FaFutbol } from 'react-icons/fa';
 import NoticiasCarousel from '../components/NoticiasCarousel';
 import LoadingScreen from '../components/LoadingScreen';
 import LazyImage from '../components/LazyImage';
+import TopVallasGrid from '../components/home/TopVallasGrid';
 
 export default function HomePage() {
   const { data: clubesData, loading: loadingClubes } = useQuery<{ clubes: Club[] }>(GET_CLUBES);
@@ -326,6 +327,17 @@ export default function HomePage() {
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* Sección Vallas menos batidas */}
+      <section className="container-custom py-8">
+        <div>
+          <h2 className="text-3xl font-black text-white mb-8 flex items-center gap-3">
+            <span className="text-premier-accent">🧤</span>
+            <span>Vallas Menos Batidas</span>
+          </h2>
+          <TopVallasGrid />
         </div>
       </section>
 

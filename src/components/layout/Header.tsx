@@ -12,6 +12,7 @@ export default function Header() {
     { name: 'Fixture', path: '/fixture' },
     { name: 'Clubes', path: '/clubes' },
     { name: 'Goleadores', path: '/goleadores' },
+    { name: 'Vallas', path: '/vallas' },
   ];
   
   const isActive = (path: string) => location.pathname === path;

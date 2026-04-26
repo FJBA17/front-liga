@@ -117,7 +117,7 @@ export default function JornadaDetailPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <FaClock className="text-premier-accent" />
-                    <span>{jornada.hora}</span>
+                    <span>{jornada.hora?.slice(0, 5)}</span>
                   </div>
                 </div>
               </div>
