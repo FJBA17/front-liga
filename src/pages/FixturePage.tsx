@@ -313,7 +313,12 @@ function PartidoCard({ partido, index, clubes }: PartidoCardProps) {
         {partido.estado === 'FINALIZADO' && resultados.length > 0 && (
           <div className="border-t border-premier-border/20 pt-3 md:pt-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-              {resultados.map((resultado, idx) => {
+              {(() => {
+                const SERIES_ORDER = ['TERCERA', 'SEGUNDA', 'SENIOR', 'PRIMERA'];
+                const sorted = [...resultados].sort(
+                  (a, b) => SERIES_ORDER.indexOf(a.tipoSerie) - SERIES_ORDER.indexOf(b.tipoSerie),
+                );
+                return sorted.map((resultado, idx) => {
                 const serie = seriesData[resultado.tipoSerie as keyof typeof seriesData];
                 const ganadorLocalField = resultado.golesLocal > resultado.golesVisitante;
                 const ganadorVisitanteField = resultado.golesVisitante > resultado.golesLocal;
@@ -376,7 +381,8 @@ function PartidoCard({ partido, index, clubes }: PartidoCardProps) {
                     </div>
                   </motion.div>
                 );
-              })}
+              });
+            })()}
             </div>
           </div>
         )}
