@@ -61,11 +61,12 @@ export default function ClubDetailPage() {
   const goleadoresPorSerie: Record<string, Array<{ jugador: any; goles: number }>> = {};
   
   goles.forEach((gol) => {
+    if (!gol.jugador) return; // goles al aire (secretariado), no se cuentan en goleadores
     const serie = gol.resultadoSerie.tipoSerie;
     if (!goleadoresPorSerie[serie]) {
       goleadoresPorSerie[serie] = [];
     }
-    
+
     const jugadorExistente = goleadoresPorSerie[serie].find(
       (g) => g.jugador.id === gol.jugador.id
     );
