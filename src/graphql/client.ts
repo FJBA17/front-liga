@@ -1,11 +1,13 @@
 import { ApolloClient, InMemoryCache, HttpLink } from '@apollo/client';
+import { staticLink } from './staticLink';
 
-const httpLink = new HttpLink({
-  uri: import.meta.env.VITE_GRAPHQL_URI || 'http://localhost:3000/graphql',
-});
+const graphqlUri = import.meta.env.VITE_GRAPHQL_URI || 'http://localhost:3000/graphql';
+const useSnapshot = graphqlUri === 'snapshot';
+
+const httpLink = new HttpLink({ uri: graphqlUri });
 
 export const apolloClient = new ApolloClient({
-  link: httpLink,
+  link: useSnapshot ? staticLink : httpLink,
   cache: new InMemoryCache({
     typePolicies: {
       Query: {
